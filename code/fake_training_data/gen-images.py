@@ -21,7 +21,6 @@ def gen_img():
 	line_width = height / 3
 	img = np.zeros((height,height,3), np.uint8)
 	theta = np.radians(random_angle())
-	#theta = np.radians(-45)
 	print("theta", theta)
 	x = height * np.tan(theta) # distance from center
 	print("x", x)
@@ -30,9 +29,9 @@ def gen_img():
 	cv2.line(img, (height/2, height), (line_end_x,0), GREEN, line_width)
 
 	# add border
-		# width = 10
-		# img=cv2.copyMakeBorder(img, width, width, width, width,
-		# 					   borderType = cv2.BORDER_CONSTANT, value = WHITE)
+	# width = 10
+	# img=cv2.copyMakeBorder(img, width, width, width, width,
+	# 					   borderType = cv2.BORDER_CONSTANT, value = WHITE)
 
 	return img
 	# cv2.imshow('image', img)
@@ -49,12 +48,6 @@ def straight_line():
 # sample an angle from (-max, max) degrees
 def random_angle(max=45):
 	return random.randint(-max, max+1)
-
-
-# y is the fixed image height. x is distance from the center position.
-def angle_degrees(x, y):
-	r = np.arctan(x, y)
-	return np.degrees(r)
 
 def show_img(img):
 	cv2.imshow('image', img)
