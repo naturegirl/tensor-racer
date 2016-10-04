@@ -44,12 +44,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
 
 from gopigo import *    #Has the basic functions for controlling the GoPiGo Robot
 import sys  #Used for closing the running program
+import os
 import pygame #Gives access to KEYUP/KEYDOWN events
+import picamera
+import shutil
 
 #Initialization for pygame
 pygame.init()
 screen = pygame.display.set_mode((700, 400))
 pygame.display.set_caption('Remote Control Window')
+
+
+# Camera
+cam = picamera.PiCamera()
+cam.resolution = (100, 100)
+DATA_DIR = "./data/"
+# adjust image_idx
+image_idx = 304
+# Labels
+LEFT = 0
+RIGHT = 1
+STRAIGHT = 2
 
 # Fill background
 background = pygame.Surface(screen.get_size())
@@ -83,17 +98,42 @@ for i in instructions.split('\n'):
 screen.blit(background, (0, 0))
 pygame.display.flip()
 
-DEFAULT_SPEED = 80
-DELTA = 8
+REPEAT_DELAY = 100      # delay in ms for repeat key
+DEFAULT_SPEED = 50
+DELTA_INC = 20               # change in speed when turning
+DELTA_DEC = 5
 speed_l = DEFAULT_SPEED
 speed_r = DEFAULT_SPEED
+
+def create_data_dir():
+    """creates the folders to save the training data"""
+    if os.path.exists(DATA_DIR):
+        print("delete existing dir", DATA_DIR)
+        shutil.rmtree(DATA_DIR)
+    os.mkdir(DATA_DIR)
+    os.mkdir(os.path.join(DATA_DIR, "left"))
+    os.mkdir(os.path.join(DATA_DIR, "right"))
+    os.mkdir(os.path.join(DATA_DIR, "straight"))
+
+def save_img(label, image_idx):
+    """capture and save image"""
+    if label == LEFT:
+        img_path = os.path.join(DATA_DIR, "left", str(image_idx) + ".jpg")
+    elif label == RIGHT:
+        img_path = os.path.join(DATA_DIR, "right", str(image_idx) + ".jpg")
+    elif label == STRAIGHT:
+        img_path = os.path.join(DATA_DIR, "straight", str(image_idx) + ".jpg")
+    cam.capture(img_path)
+    print("saved image", img_path)
 
 # a hold down key will be seen as repeated KEYDOWN events
 pygame.key.set_repeat(100, 100)
 
+# create_data_dir()
+
 while True:
-    print("true loop")
     event = pygame.event.wait();
+
     if event.type == pygame.KEYUP:
         # released turning keys, go straight
         print("set back to default speed")
@@ -101,27 +141,28 @@ while True:
         speed_l = speed_r = DEFAULT_SPEED
     elif event.type == pygame.KEYDOWN:
         char = event.unicode;
+        print("keydown event char:", char)
         if char == 'w':   # Forward
+            save_img(STRAIGHT, image_idx)
+            image_idx += 1
             fwd()
-            print("in forward")
-            print("set speed to", DEFAULT_SPEED)
             set_speed(DEFAULT_SPEED)
+            speed_l = speed_r = DEFAULT_SPEED
         elif char == 'a': # Left
-            speed_l -= DELTA * 2
-            speed_r += DELTA
-            print("left turn: speed_l", speed_l, "speed_r", speed_r)
+            save_img(LEFT, image_idx)
+            image_idx += 1
+            speed_l = 0
             set_left_speed(speed_l)
-            set_right_speed(speed_r)
         elif char == 'd': # Right
-            speed_r -= DELTA * 2
-            speed_l += DELTA
-            print("right turn: speed_l", speed_l, "speed_r", speed_r)
+            save_img(RIGHT, image_idx)
+            image_idx += 1
+            speed_r = 0
             set_right_speed(speed_r)
-            set_left_speed(speed_l)
         elif char == 'x':
             stop()
         elif char == 'z':
             print "\nExiting";      # Exit
             stop()
             sys.exit();
+
 
