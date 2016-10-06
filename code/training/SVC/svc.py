@@ -18,8 +18,10 @@ def main():
 
     predicted = model.predict(picar.validation.images)
     expected = picar.validation.labels
+    train_predicted = model.predict(picar.train.images)
 
-    print("Accuracy:", metrics.accuracy_score(expected, predicted))
+    print("Train Accuracy:", metrics.accuracy_score(picar.train.labels, train_predicted))
+    print("Test Accuracy:", metrics.accuracy_score(expected, predicted))
     print("Classification report for classifier %s:\n%s\n"
           % (model, metrics.classification_report(expected, predicted)))
     print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
