@@ -45,20 +45,20 @@ def main(_):
   sess = tf.InteractiveSession()
   # Train
   tf.initialize_all_variables().run()
-  for _ in range(1):
-    batch_xs, batch_ys = picar.train.next_batch(10)
+  for _ in range(5 * 400 / 20):
+    batch_xs, batch_ys = picar.train.next_batch(20)
     sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
 
   # Test trained model
   correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
   accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-  print(sess.run(accuracy, feed_dict={x: picar.test.images,
-                                      y_: picar.test.labels}))
+  print(sess.run(accuracy, feed_dict={x: picar.validation.images,
+                                      y_: picar.validation.one_hot_labels}))
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--data_dir', type=str,
-                      default='/Users/naturegirl/code/tensor-racer/data/round1',
+                      default='../../../data/round1',
                       help='Directory for storing data')
   FLAGS = parser.parse_args()
   tf.app.run()

@@ -43,6 +43,10 @@ class DataSet(object):
         return self._labels
 
     @property
+    def one_hot_labels(self):
+        return np.array([ [lb == i for i in range(len(LABELS))] for lb in self._labels])
+
+    @property
     def num_examples(self):
         return self._num_examples
 
@@ -58,8 +62,8 @@ class DataSet(object):
           # Finished epoch
           self._epochs_completed += 1
           # Shuffle the data
-          perm = numpy.arange(self._num_examples)
-          numpy.random.shuffle(perm)
+          perm = np.arange(self._num_examples)
+          np.random.shuffle(perm)
           self._images = self._images[perm]
           self._labels = self._labels[perm]
           # Start next epoch
@@ -67,7 +71,7 @@ class DataSet(object):
           self._index_in_epoch = batch_size
           assert batch_size <= self._num_examples
         end = self._index_in_epoch
-        return self._images[start:end], self._labels[start:end]
+        return self._images[start:end], self.one_hot_labels[start:end]
 
 Datasets = collections.namedtuple('Datasets', ['train', 'validation'])
 
@@ -76,7 +80,7 @@ def _load_images(data_dir):
     For the matrix each row is one training data sample, in the order the
     training data was taken."""
     files = _list_files(data_dir)
-    labels = [triple[2] for triple in files]
+    labels = np.array([triple[2] for triple in files])
     num_rows = len(labels)
     images = [_read_image(os.path.join(data_dir, fpath)) for _, fpath, _ in files]
     matrix = np.concatenate(images).reshape(num_rows, RESIZE * RESIZE * 3)
