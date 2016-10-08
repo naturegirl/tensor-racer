@@ -30,6 +30,7 @@ class DataSet(object):
             raise Exception("number of labels and images doesn't match")
         self._images = images
         self._labels = labels
+        self._one_hot_labels = np.array([ [lb == i for i in range(len(LABELS))] for lb in labels])
         self._num_examples = len(labels)
         self._epochs_completed = 0
         self._index_in_epoch = 0
@@ -44,7 +45,7 @@ class DataSet(object):
 
     @property
     def one_hot_labels(self):
-        return np.array([ [lb == i for i in range(len(LABELS))] for lb in self._labels])
+        return self._one_hot_labels
 
     @property
     def num_examples(self):
@@ -66,6 +67,7 @@ class DataSet(object):
           np.random.shuffle(perm)
           self._images = self._images[perm]
           self._labels = self._labels[perm]
+          self._one_hot_labels = self._one_hot_labels[perm]
           # Start next epoch
           start = 0
           self._index_in_epoch = batch_size
