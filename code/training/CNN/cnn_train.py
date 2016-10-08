@@ -41,7 +41,7 @@ class CnnWeights(object):
                             dtype=tf.float32))
     self.conv_biases = tf.Variable(tf.zeros([32], dtype=tf.float32))
 
-    self.fc_weights = tf.Variable(  # fully connected, depth 512.
+    self.fc_weights = tf.Variable(  # fully connected
         tf.truncated_normal([picar.RESIZE // 2 * picar.RESIZE // 2 * 32, NUM_LABELS],
                             stddev=0.1,
                             dtype=tf.float32))
