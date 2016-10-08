@@ -1,66 +1,40 @@
-#!/usr/bin/env python
-#############################################################################################################                                                                  
-# Basic example for controlling the GoPiGo using the Keyboard
-# Contributed by casten on Gitub https://github.com/DexterInd/GoPiGo/pull/112
-#
-# This code lets you control the GoPiGo from the VNC or Pi Desktop. Also, these are non-blocking calls so it is much more easier to use too.
-#
-# Controls:
-#   w:  Move forward
-#   a:  Turn left
-#   d:  Turn right
-#   s:  Move back
-#   x:  Stop
-#   t:  Increase speed
-#   g:  Decrease speed
-#   z:  Exit
-# http://www.dexterindustries.com/GoPiGo/                                                                
-# History
-# ------------------------------------------------
-# Author        Date            Comments  
-# Karan     27 June 14          Code cleanup                                                    
-# Casten    31 Dec  15          Added async io, action until keyup
-# Karan     04 Jan  16          Cleaned up the GUI
+"""controlling the picar via GUI to collect training data"""
 
-'''
-## License
- GoPiGo for the Raspberry Pi: an open source robotics platform for the Raspberry Pi.
- Copyright (C) 2015  Dexter Industries
+# This code is heavily based on the Basic Robot Control GUI at:
+# https://github.com/DexterInd/GoPiGo/tree/master/Software/Python/Examples/Basic_Robot_Control_GUI
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
-'''     
-##############################################################################################################
-
-from gopigo import *    #Has the basic functions for controlling the GoPiGo Robot
-import sys  #Used for closing the running program
+import argparse
+from gopigo import *
+import sys
 import os
-import pygame #Gives access to KEYUP/KEYDOWN events
+import pygame
 import picamera
 import shutil
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--data_dir', type=str,
+                  default='/Users/naturegirl/code/tensor-racer/data/round1',
+                  help='Directory for storing data')
+parser.add_argument('--resolution', type=int, default=100,
+                    help='Image resolution')
+parser.add_argument('--image-idx', type=int, default=0,
+                    help="""Image index from which to start saving images.
+                    This is useful when doing multiple runs on the same dataset
+                    to continually index it.""")
+
+args = parser.parse_args()
+
 
 #Initialization for pygame
 pygame.init()
 screen = pygame.display.set_mode((700, 400))
 pygame.display.set_caption('Remote Control Window')
 
-
 # Camera
 cam = picamera.PiCamera()
-cam.resolution = (100, 100)
+cam.resolution = (args.resolution, args.resolution)
 DATA_DIR = "./data/"
-# adjust image_idx
-image_idx = 304
+image_idx = args.image_idx
 # Labels
 LEFT = 0
 RIGHT = 1
@@ -75,7 +49,7 @@ background.fill((251, 250, 250))
 instructions = '''
                       BASIC GOPIGO CONTROL GUI
 
-This is a basic example for the GoPiGo Robot control 
+This is a basic example for the GoPiGo Robot control
 
 (Be sure to put focus on thi window to control the gopigo!)
 
@@ -164,5 +138,3 @@ while True:
             print "\nExiting";      # Exit
             stop()
             sys.exit();
-
-
