@@ -73,12 +73,12 @@ class CnnModel(object):
 
     # Fully connected layer.
     logits = tf.matmul(reshape, weights.fc_weights) + weights.fc_biases
-    self._loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+    self._loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits, labels))
     self._train_step = tf.train.MomentumOptimizer(0.008, 0.9).minimize(self._loss)
 
     # For validation set
-    predictions = tf.equal(tf.argmax(logits, 1), tf.argmax(labels, 1))
+    predictions = tf.equal(tf.argmax(logits, 1), labels)
     self._accuracy = tf.reduce_mean(tf.cast(predictions, tf.float32))
 
   @property
@@ -105,13 +105,13 @@ def main(_):
   train_data = tf.placeholder(
       tf.float32,
       shape=(BATCH_SIZE, picar.RESIZE, picar.RESIZE, NUM_CHANNELS))
-  train_labels = tf.placeholder(tf.int64, shape=(BATCH_SIZE, NUM_LABELS))
+  train_labels = tf.placeholder(tf.int64, shape=(BATCH_SIZE))
 
   # Place holders for validation images and labels
   eval_data = tf.placeholder(
       tf.float32,
       shape=(picar_data.validation.num_examples, picar.RESIZE, picar.RESIZE, NUM_CHANNELS))
-  eval_labels = tf.placeholder(tf.int64, shape=(picar_data.validation.num_examples, NUM_LABELS))
+  eval_labels = tf.placeholder(tf.int64, shape=(picar_data.validation.num_examples))
 
   weights = CnnWeights()
 
@@ -133,7 +133,7 @@ def main(_):
 
   accuracy = sess.run(eval.accuracy,
                       feed_dict = {eval_data: picar_data.validation.images,
-                                   eval_labels: picar_data.validation.one_hot_labels})
+                                   eval_labels: picar_data.validation.labels})
   print "prediction accuracy on validation set: ", accuracy
 
 

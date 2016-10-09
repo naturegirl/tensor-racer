@@ -30,7 +30,6 @@ class DataSet(object):
             raise Exception("number of labels and images doesn't match")
         self._images = images
         self._labels = labels
-        self._one_hot_labels = np.array([ [lb == i for i in range(len(LABELS))] for lb in labels])
         self._num_examples = len(labels)
         self._epochs_completed = 0
         self._index_in_epoch = 0
@@ -42,10 +41,6 @@ class DataSet(object):
     @property
     def labels(self):
         return self._labels
-
-    @property
-    def one_hot_labels(self):
-        return self._one_hot_labels
 
     @property
     def num_examples(self):
@@ -67,13 +62,12 @@ class DataSet(object):
           np.random.shuffle(perm)
           self._images = self._images[perm]
           self._labels = self._labels[perm]
-          self._one_hot_labels = self._one_hot_labels[perm]
           # Start next epoch
           start = 0
           self._index_in_epoch = batch_size
           assert batch_size <= self._num_examples
         end = self._index_in_epoch
-        return self._images[start:end], self.one_hot_labels[start:end]
+        return self._images[start:end], self._labels[start:end]
 
 Datasets = collections.namedtuple('Datasets', ['train', 'validation'])
 
@@ -101,7 +95,7 @@ def _read_image(path, resize=True, size=RESIZE, rgb=True):
     if size > ORIGINAL_SIZE or size <= 0:
         raise Exception("invalid size for resizing image")
     img = cv2.imread(path)
-    if resize:
+    if resize and (img.shape[0] != size or img.shape[1] != size):
         img = cv2.resize(img, (size, size), interpolation=cv2.INTER_AREA)
     if not rgb:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
