@@ -3,6 +3,7 @@
 import argparse
 import os, sys
 from sklearn import datasets, svm, metrics
+from sklearn.externals import joblib
 
 # add parent dir to be able to retrieve picar.py
 parent_dir = os.path.abspath("..")
@@ -25,11 +26,13 @@ def main():
     print("Classification report for classifier %s:\n%s\n"
           % (model, metrics.classification_report(expected, predicted)))
     print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
+    joblib.dump(model, 'model.pkl', compress=True)
+    print("Saved model to pickle file")
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--data_dir', type=str,
-                      default='/Users/naturegirl/code/tensor-racer/data/round1',
+                      default='../../../data/round1',
                       help='Directory for storing data')
   FLAGS = parser.parse_args()
   main()
