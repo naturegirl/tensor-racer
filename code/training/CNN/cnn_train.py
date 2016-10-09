@@ -14,7 +14,7 @@ FLAGS = None
 NUM_CHANNELS = 3
 NUM_LABELS = 3
 BATCH_SIZE = 20
-NUM_EPOCH = 8
+NUM_EPOCH = 10
 
 
 def RestoreChannels(images):
@@ -36,17 +36,22 @@ def RestoreChannels(images):
 class CnnWeights(object):
   def __init__(self):
     self.conv_weights = tf.Variable(
-        tf.truncated_normal([5, 5, NUM_CHANNELS, 32],  # 5x5 filter, depth 32.
+        tf.truncated_normal([5, 5, NUM_CHANNELS, 40],  # 5x5 filter, depth 40.
                             stddev=0.1,
                             dtype=tf.float32))
-    self.conv_biases = tf.Variable(tf.zeros([32], dtype=tf.float32))
+    self.conv_biases = tf.Variable(tf.zeros([40], dtype=tf.float32))
 
-    self.fc_weights = tf.Variable(  # fully connected
-        tf.truncated_normal([picar.RESIZE // 2 * picar.RESIZE // 2 * 32, NUM_LABELS],
+    self.fc1_weights = tf.Variable(  # fully connected
+        tf.truncated_normal([picar.RESIZE // 2 * picar.RESIZE // 2 * 40, 128],
                             stddev=0.1,
                             dtype=tf.float32))
-    self.fc_biases = tf.Variable(tf.constant(0.1, shape=[NUM_LABELS], dtype=tf.float32))
+    self.fc1_biases = tf.Variable(tf.constant(0.1, shape=[128], dtype=tf.float32))
 
+    self.fc2_weights = tf.Variable(  # fully connected
+        tf.truncated_normal([128, NUM_LABELS],
+                            stddev=0.1,
+                            dtype=tf.float32))
+    self.fc2_biases = tf.Variable(tf.constant(0.1, shape=[NUM_LABELS], dtype=tf.float32))
 
 class CnnModel(object):
   """convolution network model."""
@@ -71,10 +76,14 @@ class CnnModel(object):
         pool,
         [pool_shape[0], pool_shape[1] * pool_shape[2] * pool_shape[3]])
 
-    # Fully connected layer.
-    logits = tf.matmul(reshape, weights.fc_weights) + weights.fc_biases
+    # Fully connected layers.
+    fc1 = tf.nn.relu(tf.matmul(reshape, weights.fc1_weights) + weights.fc1_biases)
+    logits = tf.matmul(fc1, weights.fc2_weights) + weights.fc2_biases
+
+    regularizers = tf.nn.l2_loss(weights.fc1_weights) + tf.nn.l2_loss(weights.fc2_weights)
     self._loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
-        logits, labels))
+        logits, labels)) + 2e-4 * regularizers
+
     self._train_step = tf.train.MomentumOptimizer(0.008, 0.9).minimize(self._loss)
 
     # For validation set
@@ -97,7 +106,7 @@ class CnnModel(object):
 def main(_):
   picar_data = picar.read_data_sets(FLAGS.data_dir)
 
-  # Make each images of shape (channel, width, height)
+  # Make each images of shape (width, height, channels)
   picar_data.train._images = RestoreChannels(picar_data.train._images)
   picar_data.validation._images = RestoreChannels(picar_data.validation._images)
 
