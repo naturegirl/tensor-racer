@@ -86,7 +86,7 @@ def predict(model, x):
     print(y)
 
 if not args.imagefile:
-    setup_cam()
+    cam = setup_cam()
 
 model = load_model()
 print("done loading model")
