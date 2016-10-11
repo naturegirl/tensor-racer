@@ -21,8 +21,8 @@ VALIDATION_SIZE = 100   # size of the validation dataset
 
 class DataSet(object):
     # TODO: add boolean: greyscale?
-    def __init__(self, images, labels, dtype=dtypes.float32):
-        if dtype == dtypes.float32:
+    def __init__(self, images, labels):
+        if images.dtype == np.uint8:
             # Convert from [0, 255] -> [0.0, 1.0].
             images = images.astype(np.float32)
             images = np.multiply(images, 1.0 / 255.0)
@@ -95,7 +95,7 @@ def _read_image(path, resize=True, size=RESIZE, rgb=True):
     if size > ORIGINAL_SIZE or size <= 0:
         raise Exception("invalid size for resizing image")
     img = cv2.imread(path)
-    if resize and (img.shape[0] != size or img.shape[1] != size):
+    if resize and img.shape[:2] != (size, size):
         img = cv2.resize(img, (size, size), interpolation=cv2.INTER_AREA)
     if not rgb:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
