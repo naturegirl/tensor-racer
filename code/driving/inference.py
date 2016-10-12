@@ -3,6 +3,7 @@
 import argparse
 from io import BytesIO
 import cv2
+from gopigo import *
 import numpy as np
 import os
 from sklearn.externals import joblib
@@ -18,7 +19,13 @@ parser.add_argument('--resize', type=int, default=30,
                     help='Resize images to this size to match training data.')
 parser.add_argument('--imagefile', type=str,
                     help='Image file on which to run inference on.')
+parser.add_argument('--nodrive', action='store_true',
+                    help='Enable this to debug without driving.')
 args = parser.parse_args()
+
+DEFAULT_SPEED = 50
+
+LABELS = {'left': 0, 'right': 1, 'straight': 2}
 
 # Some basic args checking
 if args.resize > args.resolution or args.resize <= 0:
@@ -84,6 +91,31 @@ def predict(model, x):
     y = model.predict(x)
     print("y")
     print(y)
+    return y[0]
+
+def drive():
+    if not args.nodrive:
+        fwd()
+        set_speed(DEFAULT_SPEED)
+    while True:
+        img = _postprocess(capture())
+        print img
+        y = predict(model, img)
+        if y == LABELS['left']:
+            print "left"
+            if not args.nodrive:
+                set_left_speed(0)
+                set_right_speed(DEFAULT_SPEED)
+        elif y == LABELS['right']:
+            print "right"
+            if not args.nodrive:
+                set_right_speed(0)
+                set_left_speed(DEFAULT_SPEED)
+        elif y == LABELS['straight']:
+            print "straight"
+            if not args.nodrive:
+                fwd()
+                set_speed(DEFAULT_SPEED)
 
 if not args.imagefile:
     cam = setup_cam()
@@ -93,11 +125,10 @@ print("done loading model")
 
 if args.imagefile:
     img = read_image(args.imagefile)
+    img = _postprocess(img)
+    print img
+    print("start predict")
+    predict(model, img)
 else:
-    img = capture()
+    drive()
 
-img = _postprocess(img)
-print img
-
-print("start predict")
-predict(model, img)
