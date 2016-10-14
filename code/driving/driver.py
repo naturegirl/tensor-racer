@@ -40,7 +40,7 @@ class Driver(object):
 
     @abc.abstractmethod
     def predict(self, x):
-        """Make prediction with self.model and x and single value y"""
+        """Make prediction with self.model and x and return single value y"""
         pass
 
     def run(self):
