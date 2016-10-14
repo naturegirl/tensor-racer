@@ -87,8 +87,8 @@ class CnnModel(object):
     self._train_step = tf.train.MomentumOptimizer(0.008, 0.9).minimize(self._loss)
 
     # For validation set
-    predictions = tf.equal(tf.argmax(logits, 1), labels)
-    self._accuracy = tf.reduce_mean(tf.cast(predictions, tf.float32))
+    self._predictions = tf.argmax(logits, 1)
+    self._accuracy = tf.reduce_mean(tf.cast(tf.equal(self._predictions, labels), tf.float32))
 
   @property
   def train_step(self):
@@ -97,6 +97,10 @@ class CnnModel(object):
   @property
   def loss(self):
     return self._loss
+
+  @property
+  def predictions(self):
+    return self._predictions;
 
   @property
   def accuracy(self):
@@ -130,6 +134,13 @@ def main(_):
   # Cnn graph, with the same weights as above, for prediction uses
   eval = CnnModel(weights, eval_data, eval_labels)
 
+  # Cnn graph for prediction uses
+  prediction_data = tf.placeholder(
+      tf.float32,
+      shape=(1, picar.RESIZE, picar.RESIZE, NUM_CHANNELS))
+  dummy_label = tf.placeholder(tf.int64, shape=(1))
+  prediction_model = CnnModel(weights, prediction_data, dummy_label)
+
   sess = tf.InteractiveSession()
   tf.initialize_all_variables().run()
 
@@ -145,11 +156,21 @@ def main(_):
                                    eval_labels: picar_data.validation.labels})
   print "prediction accuracy on validation set: ", accuracy
 
+  if FLAGS.model_file:
+    tf.add_to_collection('prediction_data', prediction_data)
+    tf.add_to_collection('predictions', prediction_model.predictions)
+
+    tf.train.export_meta_graph(filename=FLAGS.model_file)    
+    saver = tf.train.Saver()
+    saver.save(sess, FLAGS.model_file)
+
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--data_dir', type=str,
                       default='../../../data/round1',
                       help='Directory for storing data')
+  parser.add_argument('--model_file', type=str, default='',
+                      help='file path to save a trained model')
   FLAGS = parser.parse_args()
   tf.app.run()
