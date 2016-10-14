@@ -21,6 +21,7 @@ class Driver(object):
     __metaclass__ = abc.ABCMeta
     def __init__(self, modelfile, imagefile=None, nodrive=False):
         """
+        modelfile: path to model file, used by load_model()
         imagefile: when given, don't predict via cam, but only with given imagefile
         nodrive: when True, do not drive, only print out prediction
         """

@@ -13,6 +13,7 @@ args = parser.parse_args()
 
 class SVC_Driver(Driver):
     def __init__(self, modelfile, imagefile=None, nodrive=False):
+        """see superclass for what the parameters mean"""
         super(SVC_Driver, self).__init__(modelfile, imagefile, nodrive)
 
     def load_model(self, modelfile):
@@ -20,14 +21,12 @@ class SVC_Driver(Driver):
             raise Exception("model file does not exist")
         return joblib.load(modelfile)
 
-
     def predict(self, x):
         """make predictions given model and feature vector x"""
         y = self.model.predict(x)
         print("y")
         print(y)
         return y[0]
-
 
 d = SVC_Driver(modelfile=args.modelfile, imagefile=args.imagefile, nodrive=True)
 d.run()
