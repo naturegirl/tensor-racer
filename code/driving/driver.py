@@ -1,15 +1,16 @@
+import abc
 import argparse
-from io import BytesIO
 import cv2
-try:
-    from gopigo import *
-except ImportError:
-    print("gopigo not found")
+from io import BytesIO
 import numpy as np
 import os
 from sklearn.externals import joblib
 from time import sleep
 
+try:
+    from gopigo import *
+except ImportError:
+    print("gopigo not found")
 
 LABELS = {'left': 0, 'right': 1, 'straight': 2}
 RESIZE = 30     # resize images to this size
@@ -17,7 +18,8 @@ RESOLUTION = 100  # original image resolution
 DEFAULT_SPEED = 50
 
 class Driver(object):
-    def __init__(self, imagefile=None, nodrive=False):
+    __metaclass__ = abc.ABCMeta
+    def __init__(self, modelfile, imagefile=None, nodrive=False):
         """
         imagefile: when given, don't predict via cam, but only with given imagefile
         nodrive: when True, do not drive, only print out prediction
@@ -26,18 +28,54 @@ class Driver(object):
         self.nodrive = nodrive
         self.resize = RESIZE
         self.resolution = RESOLUTION
-        print("in driver")
+        self.model = self.load_model(modelfile)
         if not self.imagefile:
             self.cam = self._setup_cam()
 
+    @abc.abstractmethod
     def load_model(self, modelfile):
-        """implemented by subclass. Will load model and safe as self.model"""
-        return None
+        """Load model and return"""
+        pass
 
+    @abc.abstractmethod
     def predict(self, x):
-        """implemented by subclass. Will make prediction with
-        self.model and x, and return a y."""
-        return 0
+        """Make prediction with self.model and x and single value y"""
+        pass
+
+    def run(self):
+        """call this function after the constructor"""
+        if self.imagefile:
+            img = self._postprocess(self._read_image())
+            self.predict(img)
+        else:
+            self.drive()
+
+    def drive(self):
+        """when not predicting on a single image,
+        we will go into this function to continuously drive."""
+        if not self.nodrive:
+            fwd()
+            set_speed(DEFAULT_SPEED)
+        while True:
+            img = self._postprocess(self._capture())
+            print img
+            y = self.predict(img)
+            if y == LABELS['left']:
+                print "left"
+                if not self.nodrive:
+                    set_left_speed(0)
+                    set_right_speed(DEFAULT_SPEED)
+            elif y == LABELS['right']:
+                print "right"
+                if not self.nodrive:
+                    set_right_speed(0)
+                    set_left_speed(DEFAULT_SPEED)
+            elif y == LABELS['straight']:
+                print "straight"
+                if not self.nodrive:
+                    fwd()
+                    set_speed(DEFAULT_SPEED)
+
 
     def _setup_cam(self):
         import picamera
@@ -70,38 +108,6 @@ class Driver(object):
                              interpolation=cv2.INTER_AREA)
         return img.flatten()
 
-    def run(self):
-        """call this function after the constructor"""
-        if self.imagefile:
-            img = self._postprocess(self._read_image())
-            self.predict(img)
-        else:
-            self.drive()
-
-    def drive(self):
-        if not self.nodrive:
-            fwd()
-            set_speed(DEFAULT_SPEED)
-        while True:
-            img = self._postprocess(self._capture())
-            print img
-            y = self.predict(img)
-            if y == LABELS['left']:
-                print "left"
-                if not self.nodrive:
-                    set_left_speed(0)
-                    set_right_speed(DEFAULT_SPEED)
-            elif y == LABELS['right']:
-                print "right"
-                if not self.nodrive:
-                    set_right_speed(0)
-                    set_left_speed(DEFAULT_SPEED)
-            elif y == LABELS['straight']:
-                print "straight"
-                if not self.nodrive:
-                    fwd()
-                    set_speed(DEFAULT_SPEED)
-
 
     def _capture(self):
         """capture one image and return as 1D numpy array"""
@@ -115,7 +121,6 @@ class Driver(object):
 
         # resize image to match training size
         img = cv2.resize(img, (self.resize, self.resize), interpolation=cv2.INTER_AREA)
-        print("done resizing")
 
     #    cv2.imshow('image',img)
     #    cv2.waitKey(0)
