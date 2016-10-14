@@ -22,7 +22,7 @@ class SVC_Driver(Driver):
 
 
 
-#d = SVC_Driver(imagefile="/Users/naturegirl/code/tensor-racer/data/round1/left/1.jpg", nodrive=True)
+# d = SVC_Driver(imagefile="../../data/round1/left/1.jpg", nodrive=True)
 d = SVC_Driver(nodrive=True)
-d.load_model(modelfile="/Users/naturegirl/code/tensor-racer/code/training/SVC/model.pkl")
+d.load_model(modelfile="../training/SVC/model.pkl")
 d.run()

@@ -106,7 +106,7 @@ class Driver(object):
     def _capture(self):
         """capture one image and return as 1D numpy array"""
         stream = BytesIO()
-        cam.capture(stream, 'jpeg')
+        self.cam.capture(stream, 'jpeg')
         data = np.fromstring(stream.getvalue(), dtype=np.uint8)
         # "Decode" the image preserving color
         img = cv2.imdecode(data, 1)
@@ -114,7 +114,7 @@ class Driver(object):
         img = img[:, :, ::-1]
 
         # resize image to match training size
-        img = cv2.resize(img, (args.resize, args.resize), interpolation=cv2.INTER_AREA)
+        img = cv2.resize(img, (self.resize, self.resize), interpolation=cv2.INTER_AREA)
         print("done resizing")
 
     #    cv2.imshow('image',img)
