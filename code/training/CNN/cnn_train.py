@@ -57,7 +57,7 @@ class CnnModel(object):
   """convolution network model."""
 
   def __init__(self, weights, images_data, labels):
-    
+
     # Construct the graph
     # (1) convolution layer
     conv = tf.nn.conv2d(images_data,
@@ -108,11 +108,7 @@ class CnnModel(object):
 
 
 def main(_):
-  picar_data = picar.read_data_sets(FLAGS.data_dir)
-
-  # Make each images of shape (width, height, channels)
-  picar_data.train._images = RestoreChannels(picar_data.train._images)
-  picar_data.validation._images = RestoreChannels(picar_data.validation._images)
+  picar_data = picar.read_data_sets(FLAGS.data_dir, flatten=False)
 
   # Place holders for training images and labels
   train_data = tf.placeholder(
@@ -160,7 +156,7 @@ def main(_):
     tf.add_to_collection('prediction_data', prediction_data)
     tf.add_to_collection('predictions', prediction_model.predictions)
 
-    tf.train.export_meta_graph(filename=FLAGS.model_file)    
+    tf.train.export_meta_graph(filename=FLAGS.model_file)
     saver = tf.train.Saver()
     saver.save(sess, FLAGS.model_file)
 

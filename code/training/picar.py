@@ -1,4 +1,4 @@
-"""Functions for reading training  data and surfacing via a Dataset class"""
+"""Functions for reading training data and surfacing via a Dataset class"""
 
 # Example Usage:
 #    picar = read_data_sets("/Users/naturegirl/code/tensor-racer/data/round1)
@@ -71,7 +71,7 @@ class DataSet(object):
 
 Datasets = collections.namedtuple('Datasets', ['train', 'validation'])
 
-def _load_images(data_dir):
+def _load_images(data_dir, flatten=True):
     """read images from data_dir and return list of labels and images as matrix.
     For the matrix each row is one training data sample, in the order the
     training data was taken."""
@@ -79,7 +79,10 @@ def _load_images(data_dir):
     labels = np.array([triple[2] for triple in files])
     num_rows = len(labels)
     images = [_read_image(os.path.join(data_dir, fpath)) for _, fpath, _ in files]
-    matrix = np.concatenate(images).reshape(num_rows, RESIZE * RESIZE * 3)
+    if flatten:
+        matrix = np.concatenate(images).reshape(num_rows, RESIZE * RESIZE * 3)
+    else:
+        matrix = np.concatenate(images).reshape(num_rows, RESIZE, RESIZE, 3)
     return labels, matrix
 
 def _read_image(path, resize=True, size=RESIZE, rgb=True):
@@ -114,10 +117,11 @@ def _list_files(data_dir):
     l.sort()
     return l
 
-def read_data_sets(data_dir):
-    """Use this public function to read the dataset"""
+def read_data_sets(data_dir, flatten=True):
+    """Use this public function to read the dataset
+    flatten: when enabled, returns each image as a vector."""
     # TODO: add shuffling parameter?
-    labels, images = _load_images(data_dir)
+    labels, images = _load_images(data_dir, flatten=flatten)
 
     train_labels = labels[VALIDATION_SIZE:]
     train_images = images[VALIDATION_SIZE:]
