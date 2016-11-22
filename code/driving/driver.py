@@ -19,17 +19,20 @@ DEFAULT_SPEED = 50
 
 class Driver(object):
     __metaclass__ = abc.ABCMeta
-    def __init__(self, modelfile, imagefile=None, nodrive=False):
+    def __init__(self, modelfile, imagefile=None, nodrive=False,
+                 flatten=True):
         """
         modelfile: path to model file, used by load_model()
         imagefile: when given, don't predict via cam, but only with given imagefile
         nodrive: when True, do not drive, only print out prediction
+        flatten: when True, flatten the image into a vector
         """
         self.imagefile = imagefile
         self.nodrive = nodrive
         self.resize = RESIZE
         self.resolution = RESOLUTION
         self.model = self.load_model(modelfile)
+        self.flatten = flatten
         if not self.imagefile:
             self.cam = self._setup_cam()
 
@@ -97,7 +100,9 @@ class Driver(object):
     def _postprocess(self, img):
         """common postprocessing, whether img is captured or from file"""
         img = self._scale_to_zero_one(img)
-        img = img.reshape(1, -1)  # to avoid a scikit-learn deprecation warning later
+        if self.flatten:
+            # to avoid a scikit-learn deprecation warning later
+            img = img.reshape(1, -1)
         return img
 
     def _read_image(self):
@@ -107,7 +112,7 @@ class Driver(object):
         if img.shape[:2] != (self.resize, self.resize):
             img = cv2.resize(img, (self.resize, self.resize),
                              interpolation=cv2.INTER_AREA)
-        return img.flatten()
+        return img.flatten() if self.flatten else img
 
 
     def _capture(self):
@@ -126,4 +131,4 @@ class Driver(object):
     #    cv2.imshow('image',img)
     #    cv2.waitKey(0)
     #    cv2.destroyAllWindows()
-        return img.flatten()
+        return img.flatten() if self.flatten else img
